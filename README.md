@@ -15,9 +15,8 @@ Discover hidden Easter eggs, references, and fun secrets in your favorite movies
 - Clear Chat option to reset history  
 
 ## 🚀 Live Demo
+- Visit the live application: [https://plantnet-plant-identifier-1.onrender.com/](https://movie-easter-egg-lens.onrender.com/)
 
-Visit the live application: [https://movie-easter-egg-lens.onrender.com/
-](https://movie-easter-egg-lens.onrender.com/)
 ---
 🖼️ Screenshots
 
