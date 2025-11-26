@@ -1,15 +1,24 @@
+# app.py
 import os
 import requests
 import streamlit as st
 import google.generativeai as genai
 
 # -------------------------
-# CONFIG
+# Configuration / Keys
 # -------------------------
-genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY")  # optional but recommended for posters
 
-# System Instructions EXACT as requested
+if not GOOGLE_API_KEY:
+    st.error("❌ GOOGLE_API_KEY not found in environment variables. Set it before running.")
+    st.stop()
+
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# -------------------------
+# System instruction (exact as requested)
+# -------------------------
 SYSTEM_INSTRUCTIONS = """
 You are a movie fan who loves spotting hidden Easter eggs, references, and fun details in films.
 When someone gives you a movie or scene, give 5–10 different Easter eggs in one message, numbered or bulleted.
@@ -17,27 +26,150 @@ Each Easter egg should be concise, human-like, and enthusiastic. Use emojis natu
 Don't repeat phrases, and keep it friendly and casual.
 """
 
-model = genai.GenerativeModel(
-    "gemini-2.0-flash",
+# Gemini model for generating Easter eggs
+egg_model = genai.GenerativeModel(
+    "gemini-2.5-flash",
     system_instruction=SYSTEM_INSTRUCTIONS
 )
 
-st.set_page_config(page_title="Movie Easter Egg Lens", page_icon="🔍", layout="centered")
+# A small helper model/prompt for extracting canonical movie titles (keeps it concise)
+# This is intentionally minimal and separate from the main SYSTEM_INSTRUCTIONS.
+title_extract_model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    system_instruction="""
+You are a helpful assistant. When given a user's query, if it clearly refers to a specific movie (including fuzzy references like "2nd Harry Potter movie", "Harry Potter 2", "first Matrix film", etc.), respond with the movie's canonical title only (e.g., "Harry Potter and the Chamber of Secrets"). 
+If the input does not clearly refer to a single movie title, respond with an empty string.
+Respond with only the title or an empty string, nothing else.
+"""
+)
 
 # -------------------------
-# HEADER
+# CSS - Option A: soft gradient sides + centered white card
 # -------------------------
-st.markdown("<h1 style='text-align:center;'>🔍 Movie Easter Egg Lens</h1>", unsafe_allow_html=True)
+page_css = """
+<style>
+/* full-page soft gradients on sides */
+[data-testid="stAppViewContainer"] > div:first-child {
+    background: linear-gradient(90deg, rgba(18,18,18,0.02) 0%, rgba(18,18,18,0.00) 20%, rgba(255,255,255,1) 50%, rgba(18,18,18,0.00) 80%, rgba(18,18,18,0.02) 100%);
+}
 
+/* center card styling */
+.center-card {
+    background: rgba(255,255,255,0.98);
+    padding: 24px 28px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(7,7,7,0.08);
+    max-width: 880px;
+    margin: 16px auto;
+}
+
+/* adjust container padding so content sits away from edges */
+[data-testid="stAppViewContainer"] {
+    padding-top: 20px;
+    padding-bottom: 40px;
+}
+
+/* make images a bit rounded */
+img {
+    border-radius: 8px;
+}
+
+/* smaller screens tweak */
+@media (max-width: 768px) {
+    .center-card {
+        padding: 16px;
+        margin: 8px;
+    }
+}
+</style>
+"""
+
+st.markdown(page_css, unsafe_allow_html=True)
+
+# -------------------------
+# Helper: TMDb poster fetch using a title (if available)
+# -------------------------
+def tmdb_search_poster(title):
+    """
+    Search TMDb for the best match poster for a given title.
+    Returns poster_url or None.
+    """
+    if not TMDB_API_KEY or not title:
+        return None
+    try:
+        search_url = "https://api.themoviedb.org/3/search/movie"
+        params = {"api_key": TMDB_API_KEY, "query": title}
+        r = requests.get(search_url, params=params, timeout=8)
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        if not data.get("results"):
+            return None
+        # take first result
+        best = data["results"][0]
+        poster_path = best.get("poster_path")
+        if poster_path:
+            return f"https://image.tmdb.org/t/p/w500{poster_path}"
+        return None
+    except Exception:
+        return None
+
+# -------------------------
+# Helper: try to extract canonical movie title using Gemini
+# -------------------------
+def extract_canonical_title(user_input):
+    """
+    Use a short Gemini prompt to extract a canonical movie title if present.
+    Returns a title string or None/empty.
+    """
+    try:
+        chat = title_extract_model.start_chat(history=[])
+        resp = chat.send_message(user_input)
+        title = resp.text.strip()
+        # if model returns nothing or not helpful, treat as no title
+        if not title:
+            return None
+        # Some safety: if response looks too long, skip
+        if len(title) > 120:
+            return None
+        return title
+    except Exception:
+        return None
+
+# -------------------------
+# Helper: generate Easter eggs (single Gemini call)
+# -------------------------
+def generate_easter_eggs(user_input):
+    """
+    Call Gemini once to produce 5-10 Easter eggs for the user's input.
+    Returns string text (the assistant output).
+    """
+    try:
+        chat = egg_model.start_chat(history=[])
+        response = chat.send_message(user_input)
+        return response.text.strip()
+    except Exception as e:
+        return f"❌ Error fetching Easter eggs: {e}"
+
+# -------------------------
+# Streamlit UI (centered card)
+# -------------------------
+st.markdown('<div class="center-card">', unsafe_allow_html=True)
+
+# header
+st.markdown("<h1 style='text-align:center;margin:0;'>🔍 Movie Easter Egg Lens</h1>", unsafe_allow_html=True)
+st.markdown("")  # spacing
+
+# instructions (exact text you asked for)
 st.markdown("""
 Ask about any movie you would like to find Easter eggs about,  
 for example **Harry Potter**, **Inception**, or **Interstellar**,  
 to get multiple hidden Easter eggs and fun movie secrets! 😎
 """)
 
-# -------------------------
-# EXAMPLES
-# -------------------------
+st.markdown("")
+
+# examples (exact list, one per line)
 st.subheader("💡 Try these:")
 examples = [
     "What hidden stuff is in the first Harry Potter movie?",
@@ -52,86 +184,71 @@ for ex in examples:
 
 st.markdown("---")
 
-# -------------------------
-# TMDB POSTER FETCH
-# -------------------------
-def fetch_movie_poster(movie_name):
-    if not TMDB_API_KEY:
-        return None
-
-    url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={movie_name}"
-    res = requests.get(url).json()
-
-    if "results" not in res or len(res["results"]) == 0:
-        return None
-
-    poster_path = res["results"][0].get("poster_path")
-    if not poster_path:
-        return None
-
-    return f"https://image.tmdb.org/t/p/w500{poster_path}"
-
-# -------------------------
-# MAIN FUNCTION — ONE CALL
-# -------------------------
-def generate_easter_eggs(user_query):
-    try:
-        chat = model.start_chat(history=[])
-        response = chat.send_message(user_query)
-        return response.text.strip()
-    except Exception as e:
-        return f"❌ Error: {e}"
-
-# -------------------------
-# CHAT UI
-# -------------------------
-st.subheader("🎬 Ask About a Movie or Scene")
-
-user_query = st.text_input("Your question about Easter eggs:")
-
-# Store chat history in session_state
+# initialize session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-if st.button("🔍 Find Easter Eggs"):
-    if user_query.strip():
-        # Get Easter eggs (ONE Gemini call)
-        answer = generate_easter_eggs(user_query)
+# input area
+st.subheader("🎬 Ask about a movie or scene")
+user_input = st.text_input("Enter movie or scene:", placeholder="e.g., 'Hidden details in Harry Potter: Quidditch scenes'")
 
-        # Fetch movie poster
-        poster_url = fetch_movie_poster(user_query)
+col1, col2, col3 = st.columns([1, 6, 1])  # just for nicer layout of button area
+with col2:
+    search_btn = st.button("🔍 Find Easter Eggs")
+    clear_btn = st.button("🗑️ Clear Chat")
 
-        # Store newest on top
-        st.session_state.chat_history.insert(0, {
-            "user": user_query,
-            "assistant": answer,
-            "poster": poster_url
-        })
+# handle clear
+if clear_btn:
+    st.session_state.chat_history = []
+
+# handle search click
+if search_btn and user_input.strip():
+    # 1) Ask Gemini to extract canonical title (if any)
+    canonical_title = extract_canonical_title(user_input)
+    # 2) Try TMDb poster fetch using the canonical title (if found), else try using the raw input
+    poster = None
+    if canonical_title:
+        poster = tmdb_search_poster(canonical_title)
+    # if no poster found yet, try searching using raw user input (useful if user typed exact title)
+    if not poster:
+        poster = tmdb_search_poster(user_input)
+
+    # 3) Call Gemini once to generate Easter eggs (use original user_input so scene queries remain accurate)
+    easter_text = generate_easter_eggs(user_input)
+
+    # 4) Insert newest at top
+    st.session_state.chat_history.insert(0, {
+        "user": user_input,
+        "assistant": easter_text,
+        "poster": poster,
+        "title_hint": canonical_title or ""
+    })
 
 # -------------------------
-# DISPLAY CHAT HISTORY (newest first)
+# Display chat history (newest first)
 # -------------------------
-for chat in st.session_state.chat_history:
-    st.markdown("### You")
-    st.write(chat["user"])
+for item in st.session_state.chat_history:
+    # You (user)
+    st.markdown("**You:**")
+    st.write(item["user"])
 
-    st.markdown("### 🥚 Easter Eggs")
-    
-    if chat["poster"]:
-        st.image(chat["poster"], width=250)
+    # Poster (if available)
+    if item.get("poster"):
+        st.image(item["poster"], width=260)
 
-    st.write(chat["assistant"])
+    # Assistant label
+    st.markdown("**Easter Egg 🥚:**")
+    # Easter eggs response (already a block of text with bullets/numbering as provided by Gemini)
+    st.write(item["assistant"])
     st.markdown("---")
 
-# -------------------------
-# FOOTER
-# -------------------------
+# footer inside center card
 st.markdown("""
-<div style='text-align: center; color: #666; padding: 2rem;'>
+<div style='text-align: center; color: #666; padding-top: 6px;'>
     <p>🎬 <strong>Movie Easter Egg Lens</strong> | Powered by 
         <a href='https://www.themoviedb.org/' target='_blank'>TMDb</a>, 
         <a href='https://ai.google.dev/' target='_blank'>Google Gemini</a>, 
-        <a href='https://render.com/' target='_blank'>Render</a> & 
+        <a href='https://render.com/' target='_blank'>Render</a> &amp; 
         <a href='https://streamlit.io/' target='_blank'>Streamlit</a>
     </p>
     <p>Made with ❤️ for movie enthusiasts</p>
@@ -139,3 +256,5 @@ st.markdown("""
     <p>🔗 <a href='https://github.com/sachinprabhu007/MovieEasterEggLens' target='_blank'>View on GitHub</a></p>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)  # close center-card div
