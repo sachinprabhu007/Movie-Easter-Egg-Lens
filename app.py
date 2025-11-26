@@ -21,32 +21,38 @@ genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel(
     "gemini-2.5-flash",
     system_instruction="""
-You are a huge movie fan. Chat casually and enthusiastically about hidden Easter eggs, references, and fun details in movies. Use emojis, short sentences, and be friendly.
+You are a movie fan who loves spotting hidden Easter eggs, references, and fun details in films.
+When someone gives you a movie or scene, give 5–10 different Easter eggs in one message, numbered or bulleted.
+Each Easter egg should be concise, human-like, and enthusiastic. Use emojis naturally.
+Don't repeat phrases, and keep it friendly and casual.
 """
 )
 
 # -----------------------------
-# Function to query Gemini multiple times
+# Function to query Gemini once
 # -----------------------------
-def find_multiple_easter_eggs(movie_query, num_responses=3):
-    responses = []
-    for _ in range(num_responses):
-        try:
-            chat = model.start_chat(history=[])
-            response = chat.send_message(movie_query)
-            responses.append(response.text)
-        except Exception as e:
-            responses.append(f"❌ Error: {str(e)}")
-    return responses
+def find_easter_eggs(movie_query):
+    try:
+        chat = model.start_chat(history=[])
+        response = chat.send_message(movie_query)
+        return response.text
+    except Exception as e:
+        return f"❌ Oops, something went wrong: {str(e)}"
 
 # -----------------------------
 # Streamlit UI
 # -----------------------------
 st.set_page_config(page_title="Movie Easter Egg Lens", page_icon="🎬")
-st.title("🎬 Movie Easter Egg Lens 🥚")
+st.title("🎬 Movie Easter Egg Lens 🔍")
 st.markdown(
-    "Ask about any movie you would like to find easter eggs about, for example **Harry Potter**, **Inception**, or **Interstellar** to get multiple hidden Easter eggs and fun movie secrets! 😎"
+    "Ask about any movie you would like to find Easter eggs about, "
+    "for example **Harry Potter**, **Inception**, or **Interstellar**, "
+    "to get multiple hidden Easter eggs and fun movie secrets! 😎"
 )
+
+# Session state for chat history
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 # User input
 movie_query = st.text_input(
@@ -54,15 +60,22 @@ movie_query = st.text_input(
     placeholder="e.g., 'Hidden details in Harry Potter: Quidditch scenes'"
 )
 
-num_responses = st.slider("How many Easter egg answers?", 1, 5, 3)
-
+# Submit button
 if st.button("🔍 Find Easter Eggs"):
     if movie_query.strip():
-        st.info("🎬 Searching for hidden Easter eggs...")
-        results = find_multiple_easter_eggs(movie_query, num_responses=num_responses)
-        for i, res in enumerate(results, 1):
-            with st.expander(f"🍿 Easter Egg {i}"):
-                st.write(res)
+        st.info("🎬 Digging for hidden Easter eggs...")
+        response = find_easter_eggs(movie_query)
+        st.session_state.chat_history.append((movie_query, response))
+
+# Clear chat button
+if st.button("🗑️ Clear Chat"):
+    st.session_state.chat_history = []
+
+# Display chat history
+for human, bot in st.session_state.chat_history:
+    st.markdown(f"**You:** {human}")
+    st.markdown(f"**Movie Fan:** {bot}")
+    st.markdown("---")
 
 # -----------------------------
 # Example prompts
@@ -76,7 +89,9 @@ examples = [
     "Dream layers in Inception – hidden details?",
     "Interstellar – subtle things Nolan put in the movie?"
 ]
-st.write(", ".join(examples))
+
+for ex in examples:
+    st.markdown(f"- {ex}")
 
 # -----------------------------
 # Footer
