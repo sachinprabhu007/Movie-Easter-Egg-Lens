@@ -97,6 +97,8 @@ User Input → Extract Canonical Title (Gemini) → Fetch Poster (TMDb) → Gene
 
 - **Build Command:** `pip install -r requirements.txt` (optional, Render auto-detects Python)
 - **Start Command:**  ```streamlit run app.py --server.port $PORT --server.enableCORS false```
+- Environment Variables: GOOGLE_API_KEY and TMDB_API_KEY
+- Optional: Enable Auto-Deploy from GitHub
 
 ### Environment Variables:
 
@@ -143,27 +145,15 @@ User Input → Extract Canonical Title (Gemini) → Fetch Poster (TMDb) → Gene
 git clone https://github.com/sachinprabhu007/MovieEasterEggLens.git
 cd MovieEasterEggLens
 
-Install dependencies:
-
+2. Install dependencies:
 pip install -r requirements.txt
 
+3. Set environment variables in Render environment :
 
-Set environment variables in Render environment :
-
+```
 export GOOGLE_API_KEY="YOUR_GOOGLE_GEMINI_API_KEY"
 export TMDB_API_KEY="YOUR_TMDB_API_KEY"  # Optional for posters
-
---- 
-### 🏗️ Deployment on Render
-
-Build Command: pip install -r requirements.txt
-
-Start Command: streamlit run app.py --server.port $PORT --server.enableCORS false
-
-Environment Variables: GOOGLE_API_KEY and TMDB_API_KEY
-
-Optional: Enable Auto-Deploy from GitHub
-
+```
 --- 
 ### 🔑 API Keys
 TMDb API
