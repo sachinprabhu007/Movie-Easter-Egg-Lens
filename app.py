@@ -33,7 +33,7 @@ egg_model = genai.GenerativeModel(
 )
 
 # -------------------------
-# CSS - Option A: Black background + film strips sides
+# CSS - Black background + film strips sides
 # -------------------------
 page_css = """
 <style>
