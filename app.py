@@ -5,6 +5,16 @@ import streamlit as st
 import google.generativeai as genai
 
 # -------------------------
+# Streamlit Page Configuration
+# -------------------------
+st.set_page_config(
+    page_title="🎬 Movie Easter Egg Lens",
+    page_icon="🔍",
+    layout="centered"
+)
+
+
+# -------------------------
 # Configuration / Keys
 # -------------------------
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
