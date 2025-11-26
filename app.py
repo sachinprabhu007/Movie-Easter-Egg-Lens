@@ -222,4 +222,8 @@ st.markdown("""
     </p>
     <p>Made with ❤️ for movie enthusiasts</p>
     <p>by <strong>Sachin Prabhu</strong></p>
-    <p>🔗 <a href='https://github.com/sachinprabhu007/MovieEasterEggLens' t
+    <p>🔗 <a href='https://github.com/sachinprabhu007/MovieEasterEggLens' target='_blank'>View on GitHub</a></p>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
