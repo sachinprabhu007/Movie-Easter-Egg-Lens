@@ -100,8 +100,8 @@ User Input → Extract Canonical Title (Gemini) → Fetch Poster (TMDb) → Gene
 
 ### Environment Variables:
 
-GOOGLE_API_KEY → Google Gemini API key
-TMDB_API_KEY → TMDb API key (optional)
+GOOGLE_API_KEY - Google Gemini API key
+TMDB_API_KEY - TMDb API key (optional)
 Optional: Enable Auto-Deploy from GitHub to automatically update on pushes.
 
 **Components:**
