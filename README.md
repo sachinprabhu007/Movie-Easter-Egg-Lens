@@ -11,7 +11,6 @@ Discover hidden Easter eggs, references, and fun secrets in your favorite movies
 - Human-like, casual, emoji-rich responses  
 - Optional TMDb poster displayed with Easter eggs  
 - Chat history maintained (newest first)  
-- Black background with film strips for immersive movie vibe  
 - Clear Chat option to reset history  
 
 ## 🚀 Live Demo
