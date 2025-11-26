@@ -20,112 +20,86 @@ Discover hidden Easter eggs, references, and fun secrets in your favorite movies
 
 The app combines **Streamlit**, **Google Gemini**, and **TMDb API**:
 
-1️⃣ Frontend (UI Layer — Streamlit) Frontend (UI Layer — Streamlit)
+## 1️⃣ Frontend (Streamlit)
 
-Header & Instructions
+- **Framework:** [Streamlit](https://streamlit.io/)  
+- **Responsibilities:**
+  - Accept user queries (movie names or specific scenes)
+  - Display chat history with newest responses on top
+  - Show Easter Egg 🥚 responses from Google Gemini
+  - Show TMDb poster images if available
+  - Clear chat history
+  - Footer with links to GitHub, Render, TMDb, Streamlit, and Google Gemini
 
-Title: 🔍 Movie Easter Egg Lens
+- **UI Features:**
+  - Black background with film strips for visual theme
+  - Input textbox for queries
+  - Buttons: 🔍 Find Easter Eggs & 🗑️ Clear Chat
+  - Example queries displayed to guide the user
 
-Instructions: “Ask about any movie you would like to find Easter eggs…”
+---
 
-Examples Section
+## 2️⃣ Backend (Render + APIs)
 
-Shows 6 example queries (Harry Potter, Inception, Interstellar)
+- **Google Gemini API**
+  - `egg_model` → Generates 5–10 unique Easter eggs for a given query
+  - `title_extract_model` → Extracts canonical movie title from user input
 
-Input Area
+- **TMDb API**
+  - Optional poster/backdrop fetch based on canonical title or raw query
+  - Ensures correct image for old/new movie versions
 
-Textbox: user enters a movie or scene
+- **Server**
+  - Hosted on [Render](https://render.com/)
+  - Streamlit app runs as backend and frontend together
+  - Environment variables store API keys securely
+    - `GOOGLE_API_KEY`
+    - `TMDB_API_KEY` (optional)
 
-Buttons:
+---
 
-🔍 Find Easter Eggs → triggers TMDb + Gemini logic
+## 3️⃣ Query Flow
+User Input → Extract Canonical Title (Gemini) → Fetch Poster (TMDb) → Generate Easter Eggs (Gemini) → Display in Streamlit UI
 
-🗑️ Clear Chat → resets session state
 
-Chat Display (history)
+**Step-by-Step:**
 
-Shows entries in newest-first order
+1. **User submits a query** in Streamlit (e.g., "Hidden details in Harry Potter: Quidditch scenes").
+2. **Title Extraction:**  
+   - `title_extract_model` attempts to parse canonical movie title.  
+   - If no clear title, raw query is used for poster fetch.
+3. **Poster Fetch (Optional):**  
+   - TMDb API searches for poster based on title.  
+   - Selects correct poster for old vs new movie versions.
+4. **Generate Easter Eggs:**  
+   - `egg_model` generates 5–10 unique Easter eggs in one API call.  
+   - Responses are human-like, casual, and emoji-rich.
+5. **Display Results:**  
+   - Poster image (if available)  
+   - Easter Egg 🥚 responses  
+   - Chat history updates with newest query on top
+6. **Footer:**  
+   - Shows app credits and links to GitHub, Render, TMDb, Streamlit, and Google Gemini.
 
-Labels:
+---
 
-You: for user
+## 4️⃣ Deployment on Render
 
-Easter Egg 🥚: for Gemini response
+- **Build Command:** `pip install -r requirements.txt` (optional, Render auto-detects Python)
+- **Start Command:**  
+```bash
+streamlit run app.py --server.port $PORT --server.enableCORS false
 
-Optional poster image from TMDb per entry
+Environment Variables:
 
-Footer
+GOOGLE_API_KEY → Google Gemini API key
 
-Movie enthusiast branding
+TMDB_API_KEY → TMDb API key (optional)
 
-Links: TMDb, Google Gemini, Render, Streamlit, GitHub
+Optional: Enable Auto-Deploy from GitHub to automatically update on pushes.
 
-2️⃣ Backend / Logic Layer
 
-TMDb API integration
-
-Searches for movie using canonical title (if extracted) or raw input
-
-Returns poster URL (optional)
-
-Handles multiple results but picks the first match (you could enhance for old/new versions as discussed)
-
-Gemini API integration
-
-Main model (egg_model): generates 5–10 Easter eggs per query
-
-Helper model (title_extract_model): extracts canonical movie title from user input
-
-Ensures:
-
-Single Gemini call for Easter eggs per query
-
-Human-like, enthusiastic responses with emojis
-
-Bulleted/numbered output, concise
-
-Session State
-
-Stores chat_history with:
-
-user: user prompt
-
-assistant: Gemini response
-
-poster: TMDb image URL
-
-title_hint: canonical title extracted
-
-3️⃣ Flow of a Query
-
-User enters a movie or scene → clicks 🔍
-
-Canonical title extraction via Gemini (title_extract_model)
-
-TMDb API call → fetch poster for canonical title or raw input
-
-Easter eggs generation via Gemini (egg_model)
-
-Response + poster inserted at top of chat history
-
-UI displays:
-
-Poster (if available)
-
-Gemini-generated Easter eggs
-
-Previous queries remain, newest first
-
-4️⃣ Deployment & Environment
-
-Render.com hosting
-
-Environment variables:
-
-GOOGLE_API_KEY → Gemini
-
-TMDB_API_KEY → TMDb
-
+```
 MovieEasterEggLens/
 │
 ├── app.py                  # Main Streamlit app
@@ -133,6 +107,7 @@ MovieEasterEggLens/
 ├── README.md               # Project documentation
 ├── LICENSE                 # License file
 ├── .gitignore              # Git ignore file
+```
 
 **Components:**
 
@@ -238,14 +213,7 @@ Newest responses appear on top, posters optional
 - requests
 - google-generativeai
 
-📜 License
+## 📄 License
 
-Copyright (c) 2025 Sachin Prabhu
+Please go through [LICENSE](LICENSE) file for details.
 
-This software is licensed for educational and personal use only.
-
-You may not use, copy, modify, distribute, or sell this software or any part of it without explicit written permission from the copyright holder.
-
-Any commercial use or other unauthorized use is strictly prohibited.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
