@@ -18,7 +18,10 @@ Discover hidden Easter eggs, references, and fun secrets in your favorite movies
 - Visit the live application: [https://plantnet-plant-identifier-1.onrender.com/](https://movie-easter-egg-lens.onrender.com/)
 
 
-https://github.com/user-attachments/assets/fac23300-6353-4745-becc-15caa8a6590b
+
+https://github.com/user-attachments/assets/cc9f8dfb-f71e-4728-8b83-ed5ef89be37d
+
+
 
 
 
