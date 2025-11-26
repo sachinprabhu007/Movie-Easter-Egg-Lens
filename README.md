@@ -23,6 +23,9 @@ Discover hidden Easter eggs, references, and fun secrets in your favorite movies
 User query with Gemini-generated Easter eggs and TMDb poster
 Newest responses appear on top, posters optional
 
+## Sequence Diagram 
+<img width="1503" height="812" alt="movie easter eggs -sequence diagram v1" src="https://github.com/user-attachments/assets/566ef813-9bab-40c7-9a40-d3f19e5de3a7" />
+
 ## 🏗️ Architecture
 
 The app combines **Streamlit**, **Google Gemini**, and **TMDb API**:
