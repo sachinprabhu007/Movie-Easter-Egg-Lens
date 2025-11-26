@@ -16,29 +16,28 @@ if not GOOGLE_API_KEY:
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # -----------------------------
-# Initialize Gemini model
+# Gemini model
 # -----------------------------
 model = genai.GenerativeModel(
     "gemini-2.5-flash",
     system_instruction="""
-You are a huge movie fan. Talk like a human who loves spotting cool Easter eggs and hidden details in movies. 
-Be casual, enthusiastic, short, and fun. Use emojis where it fits. 
-Keep it like you're chatting with a friend about movies.
+You are a huge movie fan. Chat casually and enthusiastically about hidden Easter eggs, references, and fun details in movies. Use emojis, short sentences, and be friendly.
 """
 )
 
 # -----------------------------
-# Function to query Gemini
+# Function to query Gemini multiple times
 # -----------------------------
-def find_easter_eggs(user_query, chat_history=[]):
-    try:
-        chat = model.start_chat(history=[])
-        for human, assistant in chat_history:
-            chat.send_message(human)
-        response = chat.send_message(user_query)
-        return response.text
-    except Exception as e:
-        return f"❌ Oops, something went wrong: {str(e)}"
+def find_multiple_easter_eggs(movie_query, num_responses=3):
+    responses = []
+    for _ in range(num_responses):
+        try:
+            chat = model.start_chat(history=[])
+            response = chat.send_message(movie_query)
+            responses.append(response.text)
+        except Exception as e:
+            responses.append(f"❌ Error: {str(e)}")
+    return responses
 
 # -----------------------------
 # Streamlit UI
@@ -46,39 +45,29 @@ def find_easter_eggs(user_query, chat_history=[]):
 st.set_page_config(page_title="Movie Easter Egg Lens", page_icon="🎬")
 st.title("🎬 Movie Easter Egg Lens 🥚")
 st.markdown(
-    "Ask about **Harry Potter**, **Inception**, or **Interstellar** and I'll spill all the hidden Easter eggs and fun movie secrets! 😎"
+    "Ask about any movie you would like to find easter eggs about, for example **Harry Potter**, **Inception**, or **Interstellar** to get multiple hidden Easter eggs and fun movie secrets! 😎"
 )
-
-# Session state for chat history
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
 
 # User input
-user_input = st.text_input(
-    "Ask me anything about the movies:",
-    placeholder="e.g., 'Any hidden details in Harry Potter's Quidditch scenes?'"
+movie_query = st.text_input(
+    "Enter a movie or scene:",
+    placeholder="e.g., 'Hidden details in Harry Potter: Quidditch scenes'"
 )
 
-# Submit button
+num_responses = st.slider("How many Easter egg answers?", 1, 5, 3)
+
 if st.button("🔍 Find Easter Eggs"):
-    if user_input.strip():
-        response = find_easter_eggs(user_input, st.session_state.chat_history)
-        st.session_state.chat_history.append((user_input, response))
-
-# Clear chat button
-if st.button("🗑️ Clear Chat"):
-    st.session_state.chat_history = []
-
-# Display chat history in a friendly way
-for human, bot in st.session_state.chat_history:
-    st.markdown(f"**You:** {human}")
-    st.markdown(f"**Movie Fan:** {bot}")
-    st.markdown("---")
+    if movie_query.strip():
+        st.info("🎬 Searching for hidden Easter eggs...")
+        results = find_multiple_easter_eggs(movie_query, num_responses=num_responses)
+        for i, res in enumerate(results, 1):
+            with st.expander(f"🍿 Easter Egg {i}"):
+                st.write(res)
 
 # -----------------------------
 # Example prompts
 # -----------------------------
-st.subheader("💡 Try these questions:")
+st.subheader("💡 Try these:")
 examples = [
     "What hidden stuff is in the first Harry Potter movie?",
     "Inception's spinning top scene – any cool Easter eggs?",
@@ -88,3 +77,20 @@ examples = [
     "Interstellar – subtle things Nolan put in the movie?"
 ]
 st.write(", ".join(examples))
+
+# -----------------------------
+# Footer
+# -----------------------------
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #666; padding: 2rem;'>
+    <p>🎬 <strong>Movie Easter Egg Lens</strong> | Powered by 
+        <a href='https://makersuite.google.com/' target='_blank'>Gemini API</a>, 
+        <a href='https://render.com/' target='_blank'>Render</a> & 
+        <a href='https://streamlit.io/' target='_blank'>Streamlit</a>
+    </p>
+    <p>Made with ❤️ for movie enthusiasts</p>
+    <p>by Sachin Prabhu</p>
+    <p>🔗 <a href='https://github.com/sachinprabhu007/movie-easter-egg-lens' target='_blank'>View on GitHub</a></p>
+</div>
+""", unsafe_allow_html=True)
